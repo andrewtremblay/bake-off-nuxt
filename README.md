@@ -1,5 +1,7 @@
 # bake-off-nuxt
 
+Code Sandbox: https://codesandbox.io/s/bake-off-nuxtjs-ccsij
+
 ## Build Setup
 
 ```bash

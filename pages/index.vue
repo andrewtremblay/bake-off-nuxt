@@ -1,68 +1,44 @@
 <template>
-  <p v-if="$fetchState.pending">
-    Fetching authors...
-  </p>
-  <p v-else-if="$fetchState.error">
-    An error occurred :(
-  </p>
-  <div v-else>
-    <v-row justify="center" align="center">
-      <v-col cols="12" sm="8" md="6">
-        <ul id="example-1">
-          <li v-for="a in authors" :key="a.key">
-            <router-link :to="a.key">
-              {{ a.name }}
-            </router-link>
-          </li>
-        </ul>
-        <button v-on:click="nextPage">Load More</button>
-      </v-col>
-    </v-row>
+  <div>
+    <p v-if="authors.length === 0 && $fetchState.pending">
+      Fetching...
+    </p>
+    <p v-else-if="$fetchState.error">An error occurred :(</p>
+    <div v-else>
+      <v-row justify="center" align="center">
+        <v-col cols="12" sm="8" md="6">
+          <ul id="example-1">
+            <AuthorRow
+              v-for="a in authors"
+              :key="a.key"
+              v-bind:author="a"
+              v-bind:authorKey="a.key"
+            />
+          </ul>
+          <button @click="$fetch">Load More</button>
+        </v-col>
+      </v-row>
+    </div>
   </div>
 </template>
 
 <script>
-// import Logo from "~/components/Logo.vue";
-// import VuetifyLogo from "~/components/VuetifyLogo.vue";
-
+import AuthorRow from "~/components/AuthorRow.vue";
+const itemsPerPage = 10;
 export default {
-  // components: {
-  //   Logo,
-  //   VuetifyLogo
-  // },
-  data() {
-    return { authors: [], offset: 0 };
+  components: {
+    AuthorRow
   },
-  methods: {
-    async nextPage() {
-      this.offset += 10;
-      const authors = await fetch(
-        `http://openlibrary.org/query.json?type=/type/author&*=&offset=${this.offset}&limit=10`
-      ).then(res => res.json());
-      const authorFetches = authors
-        .filter(a => a.key)
-        .map(a => {
-          return fetch(`http://openlibrary.org${a.key}.json`).then(res =>
-            res.json()
-          );
-        });
-      const newAuthors = await Promise.all(authorFetches);
-      this.authors = [...this.authors, ...newAuthors];
-    }
+  data() {
+    return { authors: [], baseAuthorInfo: [], lastLoadedUrl: "", offset: 0 };
   },
   async fetch() {
-    const authors = await fetch(
-      `http://openlibrary.org/query.json?type=/type/author&*=&offset=${this.offset}&limit=10`
-    ).then(res => res.json());
-    const authorFetches = authors
-      .filter(a => a.key)
-      .map(a => {
-        return fetch(`http://openlibrary.org${a.key}.json`).then(res =>
-          res.json()
-        );
-      });
-    const newAuthors = await Promise.all(authorFetches);
-    this.authors = [...this.authors, ...newAuthors];
+    this.offset += itemsPerPage;
+    this.lastLoadedUrl = `http://openlibrary.org/query.json?type=/type/author&*=&offset=${this.offset}&limit=${itemsPerPage}`;
+    this.baseAuthorInfo = await fetch(this.lastLoadedUrl).then(res =>
+      res.json()
+    );
+    this.authors = [...this.authors, ...this.baseAuthorInfo];
   }
 };
 </script>
